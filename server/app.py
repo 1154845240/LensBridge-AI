@@ -4,6 +4,7 @@ import time
 import json
 import asyncio
 import sqlite3
+import logging
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from typing import List
 from pydantic import BaseModel
@@ -18,10 +19,11 @@ import app_paths
 import runtime_state
 
 try:
-    from . import database, agent_manager
+    from . import database, agent_manager, file_cleanup
 except ImportError:
     import database
     import agent_manager
+    import file_cleanup
 
 app = FastAPI(title="LensBridge AI Server")
 app_paths.ensure_runtime_layout()
@@ -46,6 +48,14 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 @app.on_event("startup")
 def startup_event():
     database.init_db()
+    _, deleted, errors = file_cleanup.cleanup_orphan_uploads(
+        UPLOAD_DIR,
+        database.get_all_image_filenames(),
+    )
+    if deleted:
+        logging.info("Removed %s orphan upload file(s).", deleted)
+    if errors:
+        logging.warning("Failed to remove orphan upload files: %s", errors)
 
 # Global memory active conversation ID
 active_conversation_id = None
@@ -136,27 +146,16 @@ def create_conversation(title: str = Form(None)):
 @app.delete("/conversations/{conv_id}")
 def delete_conversation(conv_id: int):
     filenames = database.delete_conversation(conv_id)
-    for filename_str in filenames:
-        try:
-            # check if it's JSON array
-            if filename_str.startswith("["):
-                files_list = json.loads(filename_str)
-            else:
-                files_list = [filename_str]
-                
-            for fname in files_list:
-                filepath = os.path.join(UPLOAD_DIR, fname)
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-        except Exception:
-            pass
+    deleted, errors = file_cleanup.delete_upload_files(UPLOAD_DIR, filenames)
+    if errors:
+        logging.warning("Conversation %s upload cleanup failed: %s", conv_id, errors)
                 
     # Reset active conversation ID if the current active one was deleted
     global active_conversation_id
     if active_conversation_id == conv_id:
         active_conversation_id = None  # Will automatically select latest on next upload/view
         
-    return {"status": "success"}
+    return {"status": "success", "deleted_files": deleted, "cleanup_errors": errors}
 
 @app.get("/conversations/active")
 def get_active_conversation():
@@ -202,19 +201,10 @@ def get_captures():
 def delete_capture(capture_id: int):
     filename_str = database.delete_capture(capture_id)
     if filename_str:
-        try:
-            if filename_str.startswith("["):
-                files_list = json.loads(filename_str)
-            else:
-                files_list = [filename_str]
-                
-            for fname in files_list:
-                filepath = os.path.join(UPLOAD_DIR, fname)
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-        except Exception:
-            pass
-        return {"status": "success"}
+        deleted, errors = file_cleanup.delete_upload_files(UPLOAD_DIR, [filename_str])
+        if errors:
+            logging.warning("Capture %s upload cleanup failed: %s", capture_id, errors)
+        return {"status": "success", "deleted_files": deleted, "cleanup_errors": errors}
     return {"status": "error", "message": "Capture not found"}
 
 @app.post("/captures/text")
@@ -258,22 +248,12 @@ async def retry_latest_capture():
 @app.post("/captures/clear")
 def clear_captures():
     filenames = database.clear_all_history()
-    for filename_str in filenames:
-        try:
-            if filename_str.startswith("["):
-                files_list = json.loads(filename_str)
-            else:
-                files_list = [filename_str]
-                
-            for fname in files_list:
-                filepath = os.path.join(UPLOAD_DIR, fname)
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-        except Exception:
-            pass
+    deleted, errors = file_cleanup.delete_upload_files(UPLOAD_DIR, filenames)
+    if errors:
+        logging.warning("History upload cleanup failed: %s", errors)
     global active_conversation_id
     active_conversation_id = None
-    return {"status": "success"}
+    return {"status": "success", "deleted_files": deleted, "cleanup_errors": errors}
 
 
 def capture_filepaths(cap):

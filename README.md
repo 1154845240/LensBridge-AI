@@ -104,12 +104,8 @@ logs/
 - 不要将真实 API Key 写入代码或提交到 Git。
 - `server/config.json`、数据库、截图、日志、缓存和构建产物已通过 `.gitignore` 排除。
 - 仓库中的 `server/config.default.json` 不包含任何密钥。
-- 测试 Gemini 接口时，通过环境变量 `GEMINI_API_KEY` 提供密钥。
-
-```powershell
-$env:GEMINI_API_KEY = "你的 API Key"
-python -m server.test_gemini2
-```
+- 服务启动时会自动清理数据库未引用的孤儿上传图片。
+- 删除会话、单条题目或全部历史时，会同步删除对应图片。
 
 ## 项目结构
 
@@ -121,6 +117,7 @@ client/client.py             鼠标、键盘、截图和上传
 server/app.py                FastAPI 服务和任务协调
 server/agent_manager.py      模型接口调用
 server/database.py           SQLite 数据访问
+server/file_cleanup.py       上传图片与孤儿文件清理
 server/templates/index.html  桌面端和移动端页面
 LensBridgeAI.spec            PyInstaller 构建配置
 ```
@@ -131,5 +128,5 @@ LensBridgeAI.spec            PyInstaller 构建配置
 
 ```powershell
 .\.venv\Scripts\python -m server.test_stream_consistency
+.\.venv\Scripts\python -m server.test_file_cleanup
 ```
-

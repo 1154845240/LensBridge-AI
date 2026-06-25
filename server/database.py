@@ -247,3 +247,12 @@ def clear_all_history():
     conn.commit()
     conn.close()
     return filenames
+
+
+def get_all_image_filenames():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT image_filename FROM captures")
+    filenames = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return filenames

@@ -21,6 +21,7 @@ client/client.py            鼠标、键盘、截图、上传
 server/app.py               FastAPI、会话、配置、SSE、任务协调
 server/agent_manager.py     OpenAI 兼容模型调用
 server/database.py          SQLite 数据访问
+server/file_cleanup.py      上传图片解析、级联删除与孤儿清理
 server/templates/index.html 桌面与移动端页面
 LensBridgeAI.spec           PyInstaller 单文件构建
 dist/LensBridgeAI.exe       可分发程序
@@ -39,6 +40,8 @@ logs/lensbridge.log
 ```
 
 源码模式使用项目中的 `server/config.json`、`server/server.db`、`server/uploads` 和 `temp_captures`。
+
+服务启动时会清理上传目录中未被数据库引用的孤儿图片；删除会话、题目或全部历史时同步删除关联图片。
 
 ## 数据库
 
@@ -100,4 +103,3 @@ logs/lensbridge.log
 - 页面模型标签使用 Agent 的 `display_name`，不显示内部 ID。
 - SQLite UTC 时间在前端转换为本地时间。
 - 页面仅保留顶部电源按钮作为退出入口。
-

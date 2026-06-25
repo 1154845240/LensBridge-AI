@@ -12,7 +12,6 @@ dist/
 # Runtime data
 logs/
 temp_captures/
-local_captures/
 uploads/
 server/uploads/
 *.db
@@ -31,4 +30,3 @@ server/config.json
 .DS_Store
 Thumbs.db
 desktop.ini
-
