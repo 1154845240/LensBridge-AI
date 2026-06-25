@@ -1,0 +1,16 @@
+{
+  "active_agent": "mock",
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "agents": {},
+  "global_system_prompt": "",
+  "hotkeys": {
+    "toggle": "f8",
+    "send": "f9",
+    "clear": "esc",
+    "retry": "f10",
+    "open": "f12"
+  }
+}

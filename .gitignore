@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output
+build/
+dist/
+*.spec.bak
+
+# Runtime data
+logs/
+temp_captures/
+local_captures/
+uploads/
+server/uploads/
+*.db
+*.db-shm
+*.db-wal
+
+# Local configuration and secrets
+server/config.json
+.env
+.env.*
+!.env.example
+
+# Editor and operating system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+

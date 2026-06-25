@@ -1,0 +1,1618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensBridge AI 协同中心</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked JS for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Prism CSS & JS for Code Highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans SC', 'sans-serif'],
+                    },
+                    colors: {
+                        sidebar: '#f0f4f9',
+                        sidebarHover: '#e1e5eb',
+                        activeBlue: '#d3e3fd',
+                        textDark: '#1f1f1f',
+                        textMuted: '#474747',
+                        geminiPurple: '#4285f4',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #ffffff;
+            color: #1f1f1f;
+            min-height: 100vh;
+            overflow-x: hidden;
+            width: 100vw;
+            max-width: 100%;
+        }
+        main {
+            min-width: 0;
+        }
+        /* Custom scrollbar for light theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 8px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #bdc1c6;
+        }
+        
+        /* Mobile overflow fix for markdown tables/math */
+        .prose {
+            max-width: 100% !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            word-break: break-all !important; /* Force break long strings */
+        }
+        .prose * {
+            max-width: 100% !important;
+        }
+        /* Except images and pre can scroll */
+        .prose pre, .prose table, .prose .math, .prose .katex-display {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            word-break: normal !important;
+        }
+        
+        /* Markdown style adaptations for LensBridge AI theme */
+        .prose h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1f1f1f;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+        .prose h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #474747;
+            margin-top: 1rem;
+            margin-bottom: 0.4rem;
+        }
+        .prose p {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+            color: #1f1f1f;
+        }
+        .prose ul, .prose ol {
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+            list-style-type: decimal;
+        }
+        .prose ul {
+            list-style-type: disc;
+        }
+        .prose li {
+            margin-bottom: 0.35rem;
+            line-height: 1.6;
+        }
+        .prose code {
+            background: #f1f3f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #b06000;
+            font-family: monospace;
+        }
+        .prose pre {
+            background: #f8f9fa !important;
+            border: 1px solid #e8eaed;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+            max-width: 100%;
+            white-space: pre;
+            word-break: normal;
+        }
+        .prose pre code {
+            background: transparent;
+            padding: 0;
+            color: #1f1f1f;
+            font-size: 0.9em;
+        }
+        
+        /* Glass zoom overlay */
+        .zoom-overlay {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        .capture-status-card {
+            background: linear-gradient(135deg, rgba(238, 242, 255, 0.96), rgba(236, 254, 255, 0.96));
+        }
+        .api-key-input {
+            -webkit-text-security: disc;
+        }
+        @media (max-width: 767px) {
+            body {
+                min-height: 100dvh;
+            }
+            main {
+                height: 100dvh !important;
+            }
+            .app-header {
+                padding: 0.65rem 0.75rem;
+                gap: 0.5rem;
+            }
+            .header-conversation {
+                min-width: 0;
+                flex: 1;
+                gap: 0.35rem;
+            }
+            #active-conv-title {
+                width: 100% !important;
+                min-width: 0;
+                font-size: 0.95rem;
+                padding-left: 0.35rem;
+                padding-right: 0.35rem;
+            }
+            .header-actions {
+                flex-shrink: 0;
+                gap: 0.25rem;
+            }
+            .model-button {
+                max-width: 7.25rem;
+                padding-left: 0.55rem;
+                padding-right: 0.55rem;
+            }
+            #model-display {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            #chat-feed {
+                padding: 1rem 0.85rem 1.25rem;
+                gap: 1.25rem;
+            }
+            #messages-container {
+                gap: 1.75rem;
+            }
+            .exchange-user {
+                max-width: 100% !important;
+            }
+            .ai-card-header {
+                flex-wrap: wrap;
+                row-gap: 0.4rem;
+            }
+            .ai-card-header .agent-badge {
+                max-width: 7rem;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .prose {
+                font-size: 0.82rem !important;
+                word-break: normal !important;
+                overflow-wrap: anywhere !important;
+            }
+            .prose pre {
+                width: 100%;
+                max-width: calc(100vw - 1.7rem) !important;
+                padding: 0.8rem;
+                border-radius: 10px;
+                overflow-x: hidden !important;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+                word-break: break-word !important;
+            }
+            .prose pre code {
+                font-size: 0.76rem;
+                white-space: inherit;
+                overflow-wrap: inherit;
+                word-break: inherit;
+            }
+            .app-footer {
+                padding: 0.65rem 0.75rem calc(0.55rem + env(safe-area-inset-bottom));
+            }
+            .footer-disclaimer {
+                line-height: 1.35;
+                text-align: center;
+                padding: 0 0.5rem;
+            }
+            .settings-panel {
+                max-height: calc(100dvh - 2rem);
+                overflow-y: auto;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body class="flex font-sans">
+
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-sidebar flex-shrink-0 border-r border-slate-200 hidden md:flex flex-col justify-between h-screen p-4 sticky top-0">
+        <div class="flex flex-col gap-6 overflow-hidden">
+            <!-- Logo Section -->
+            <div class="flex items-center gap-2 px-2 py-1 select-none">
+                <!-- Star Logo Icon -->
+                <svg class="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L14.7 9.3L22 12L14.7 14.7L12 22L9.3 14.7L2 12L9.3 9.3L12 2Z" fill="url(#lensBridgeGrad)" />
+                    <defs>
+                        <linearGradient id="lensBridgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#4f46e5" />
+                            <stop offset="100%" stop-color="#06b6d4" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span class="font-bold text-lg text-slate-800 tracking-tight">LensBridge AI</span>
+            </div>
+
+            <!-- New Chat Button -->
+            <button onclick="createNewConversation()" class="flex items-center gap-3 px-4 py-3 rounded-full bg-white hover:bg-slate-50 border border-slate-200 shadow-sm transition-all duration-200 w-fit text-sm font-semibold text-slate-700">
+                <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path>
+                </svg>
+                发起新对话
+            </button>
+
+            <!-- Recent list -->
+            <div class="flex flex-col gap-2 overflow-hidden">
+                <span class="text-xs font-bold text-slate-500 px-2 tracking-wider">最近</span>
+                <div id="conversations-list" class="flex flex-col gap-1 overflow-y-auto pr-1 flex-1">
+                    <!-- Conversations loaded dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Bottom Footer -->
+        <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 px-2">
+            <div class="flex items-center justify-between text-slate-600 text-xs">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-violet-700 flex items-center justify-center text-white shadow-md shadow-blue-200/60">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="10" r="6.25" stroke="rgba(255,255,255,.45)" stroke-width="1"></circle>
+                            <path d="M12 3.75l2.15 3.72-2.15 2.5-2.15-2.5L12 3.75z" fill="white" fill-opacity=".95"></path>
+                            <path d="M6.6 6.9l4.3.05L12 10l-3.15.55L6.6 6.9z" fill="#A5F3FC"></path>
+                            <path d="M17.4 6.9l-2.25 3.65L12 10l1.1-3.05 4.3-.05z" fill="#DDD6FE"></path>
+                            <path d="M5 19h14M7 19c.85-3.1 2.5-4.65 5-4.65S16.15 15.9 17 19" stroke="white" stroke-width="1.7" stroke-linecap="round"></path>
+                            <circle cx="12" cy="10" r="1.3" fill="white"></circle>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-slate-800">镜桥 AI</p>
+                        <p class="text-[10px] text-slate-400">LensBridge 智能协同平台</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Header -->
+        <header class="app-header flex justify-between items-center px-6 py-4 border-b border-slate-200 bg-white">
+            <div class="header-conversation flex items-center gap-4">
+                <!-- Hamburger menu for mobile -->
+                <button onclick="toggleMobileSidebar()" class="md:hidden p-1 rounded-lg text-slate-600 hover:bg-slate-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <div class="flex items-center gap-2">
+                    <div class="group flex items-center relative">
+                        <input id="active-conv-title" class="text-base font-bold text-slate-800 bg-transparent border border-transparent hover:border-slate-200 hover:bg-slate-50 focus:bg-white focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100 rounded-md px-2 py-1 outline-none transition-all w-48 truncate sm:w-64" value="加载中..." onchange="renameConversation(this.value)" title="点击编辑对话名称">
+                        <svg class="w-3.5 h-3.5 text-slate-400 absolute right-2 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.89 1.12l-2.83.893.893-2.83c.2-.64.55-1.23 1.12-1.89l12.725-12.725z"></path></svg>
+                    </div>
+                    <span id="active-conv-time" class="text-xs text-slate-400 hidden md:inline ml-2"></span>
+                </div>
+            </div>
+
+            <!-- Model Selection dropdown & Settings -->
+            <div class="header-actions flex items-center gap-2">
+                <div class="relative">
+                    <button onclick="toggleAgentDropdown(event)" class="model-button flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 transition shadow-sm">
+                        <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                        <span id="model-display">加载中...</span>
+                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+                    </button>
+                    
+                    <!-- Dropdown box -->
+                    <div id="agent-dropdown" class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 hidden flex flex-col p-1.5 gap-1">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+                <!-- Global Config button -->
+                <button onclick="openGlobalSettingsModal()" class="p-1.5 text-slate-500 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition" title="全局配置 (提示词与快捷键)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </button>
+                
+                <!-- Settings button -->
+                <button onclick="openSettingsModal()" class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition" title="配置 Agent 参数">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.59 4.59A2 2 0 1111 8H2.22m7.37 8a2 2 0 11-1.37-3h8.78m-8.78 3v-3M2 12h20"></path></svg>
+                </button>
+                <button data-shutdown-control onclick="shutdownApplication()" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="关闭 LensBridge AI">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v9m6.36-6.36a9 9 0 11-12.72 0"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Live capture status -->
+        <section class="px-3 md:px-6 pt-3 max-w-4xl mx-auto w-full">
+            <div class="capture-status-card rounded-2xl border border-indigo-100 px-3.5 py-3 flex items-center gap-3 shadow-sm">
+                <div id="capture-mode-icon" class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-sm">▣</div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span id="capture-mode-label" class="text-xs font-bold text-indigo-900">单图模式</span>
+                        <span id="capture-queue-badge" class="hidden text-[10px] font-semibold text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-full px-2 py-0.5">队列 0 张</span>
+                    </div>
+                    <p id="capture-operation-text" class="text-[11px] md:text-xs text-slate-600 mt-0.5 leading-relaxed">正在读取电脑端状态…</p>
+                </div>
+                <div id="capture-countdown" class="hidden flex-shrink-0 text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2.5 py-1">15s</div>
+            </div>
+        </section>
+
+        <!-- Chat Feed -->
+        <div id="chat-feed" class="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-8 max-w-4xl mx-auto w-full">
+            <!-- Empty state greetings -->
+            <div id="empty-state" class="flex-1 flex flex-col justify-center items-center gap-6 py-12 text-center select-none hidden">
+                <h1 class="text-3xl md:text-5xl font-semibold tracking-tight bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 bg-clip-text text-transparent">
+                    使用说明与软件介绍
+                </h1>
+                <p class="text-slate-500 text-sm max-w-md">
+                    LensBridge AI 是连接电脑截图、局域网网页与多模态 AI 的跨端助手。你可以静默截取屏幕内容，也可以直接输入文字进行提问。
+                </p>
+                
+                <!-- Quick Tips Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl w-full mt-4">
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 text-left shadow-sm">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center mb-3 text-sm font-bold">1</div>
+                        <h3 class="text-xs font-bold text-slate-800 mb-1">标记截图起点</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">在电脑上将鼠标移到截图区域一角，按住左键 3 秒后松开。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-cyan-50 to-emerald-50 border border-cyan-100 text-left shadow-sm">
+                        <div class="w-8 h-8 rounded-xl bg-cyan-600 text-white flex items-center justify-center mb-3 text-sm font-bold">2</div>
+                        <h3 class="text-xs font-bold text-slate-800 mb-1">15 秒内标记终点</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">移动到对角位置，再次长按左键 3 秒；两点之间的区域会被静默截取。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 text-left shadow-sm">
+                        <div class="w-8 h-8 rounded-xl bg-violet-600 text-white flex items-center justify-center mb-3 text-sm font-bold">3</div>
+                        <h3 class="text-xs font-bold text-slate-800 mb-1">选择单图或多图模式</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">单图模式会立即发送；多图模式会加入队列，收集完成后按发送快捷键统一分析。</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-100 text-left shadow-sm">
+                        <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center mb-3 text-sm font-bold">4</div>
+                        <h3 class="text-xs font-bold text-slate-800 mb-1">手机端实时查看</h3>
+                        <p class="text-xs text-slate-500 leading-relaxed">截图上传后，当前对话会自动显示图片，并以流式方式呈现 AI 解答。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Stream -->
+            <div id="messages-container" class="flex flex-col gap-10">
+                <!-- Messages will be injected here dynamically -->
+            </div>
+        </div>
+
+        <!-- Floating Footer input section -->
+        <footer class="app-footer p-4 max-w-4xl mx-auto w-full flex flex-col gap-2 items-center bg-white border-t border-slate-100">
+            <div class="w-full flex items-center gap-3 px-4 py-3 rounded-full bg-slate-100 border border-transparent transition-all shadow-sm focus-within:border-indigo-300 focus-within:bg-white focus-within:shadow-md">
+                <!-- Action icon -->
+                <button class="text-slate-400 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+                </button>
+                
+                <!-- Prompt input -->
+                <input type="text" id="chat-input" placeholder="输入您的问题..." class="flex-1 bg-transparent text-sm text-slate-700 outline-none" onkeypress="handleChatInput(event)">
+                
+                <!-- Badge -->
+                <div class="flex items-center gap-2">
+                    <button onclick="submitChatInput()" class="text-white bg-indigo-500 hover:bg-indigo-600 rounded-full p-1.5 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75"></path></svg>
+                    </button>
+                </div>
+            </div>
+            
+            <span class="footer-disclaimer text-[10px] text-slate-400 select-none">LensBridge AI 可能会产生错误信息，请仔细甄别截图分析结果。</span>
+        </footer>
+
+    </main>
+
+    <!-- Mobile Drawer Sidebar -->
+    <div id="mobile-sidebar" class="fixed inset-0 z-50 flex hidden">
+        <div onclick="toggleMobileSidebar()" class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+        <div class="relative w-[280px] bg-sidebar p-4 flex flex-col justify-between h-full shadow-2xl">
+            <div class="flex flex-col gap-6 overflow-hidden">
+                <div class="flex items-center justify-between px-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-indigo-600" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L14.7 9.3L22 12L14.7 14.7L12 22L9.3 14.7L2 12L9.3 9.3L12 2Z" fill="url(#lensBridgeGradMobile)" />
+                            <defs>
+                                <linearGradient id="lensBridgeGradMobile" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#4f46e5" />
+                                    <stop offset="100%" stop-color="#06b6d4" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span class="font-bold text-lg text-slate-800">LensBridge AI</span>
+                    </div>
+                    <button onclick="toggleMobileSidebar()" class="p-1 rounded text-slate-500 hover:bg-slate-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <button onclick="createNewConversation(); toggleMobileSidebar();" class="flex items-center gap-3 px-4 py-3 rounded-full bg-white border border-slate-200 shadow-sm w-fit text-sm font-semibold text-slate-700">
+                    <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+                    发起新对话
+                </button>
+
+                <div class="flex flex-col gap-2 overflow-hidden">
+                    <span class="text-xs font-bold text-slate-500 px-2 tracking-wider">最近</span>
+                    <div id="mobile-conversations-list" class="flex flex-col gap-1 overflow-y-auto pr-1 flex-1">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+
+
+            </div>
+            
+            <div class="border-t border-slate-200 pt-4">
+                <div class="flex items-center gap-2 px-2 pb-3">
+                    <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 via-blue-600 to-violet-700 flex items-center justify-center text-white shadow-md shadow-blue-200/60">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="10" r="6.25" stroke="rgba(255,255,255,.45)" stroke-width="1"></circle>
+                            <path d="M12 3.75l2.15 3.72-2.15 2.5-2.15-2.5L12 3.75z" fill="white" fill-opacity=".95"></path>
+                            <path d="M6.6 6.9l4.3.05L12 10l-3.15.55L6.6 6.9z" fill="#A5F3FC"></path>
+                            <path d="M17.4 6.9l-2.25 3.65L12 10l1.1-3.05 4.3-.05z" fill="#DDD6FE"></path>
+                            <path d="M5 19h14M7 19c.85-3.1 2.5-4.65 5-4.65S16.15 15.9 17 19" stroke="white" stroke-width="1.7" stroke-linecap="round"></path>
+                            <circle cx="12" cy="10" r="1.3" fill="white"></circle>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold text-slate-800">镜桥 AI</p>
+                        <p class="text-[10px] text-slate-400">LensBridge 智能协同平台</p>
+                    </div>
+                </div>
+                <button onclick="clearHistory(); toggleMobileSidebar();" class="w-full py-2.5 text-center text-xs font-semibold rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 hover:bg-rose-500/20 transition">
+                    清除全部会话
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局配置弹窗 -->
+    <div id="global-settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden p-4">
+        <div class="settings-panel bg-white rounded-2xl border border-slate-200 p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    🌍 全局配置
+                </h3>
+                <button onclick="closeGlobalSettingsModal()" class="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600 text-xs">全局系统提示词</label>
+                    <textarea id="global-system-prompt" rows="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="默认：请分析屏幕截图，如果系统有提示词要求，请严格遵循..."></textarea>
+                </div>
+                <div class="flex flex-col gap-1 border border-slate-100 bg-slate-50 p-3 rounded-lg">
+                    <label class="font-bold text-slate-600 text-xs mb-1">PC 端快捷键自定义</label>
+                    <p class="text-[10px] text-slate-400 mb-2">支持组合键</p>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="text-slate-500">模式切换</label>
+                            <input type="text" id="hotkey-toggle" class="w-full px-2 py-1 mt-1 border border-slate-300 rounded focus:outline-none" placeholder="alt+q">
+                        </div>
+                        <div>
+                            <label class="text-slate-500">发送多图</label>
+                            <input type="text" id="hotkey-send" class="w-full px-2 py-1 mt-1 border border-slate-300 rounded focus:outline-none" placeholder="ctrl+w">
+                        </div>
+                        <div>
+                            <label class="text-slate-500">清空队列</label>
+                            <input type="text" id="hotkey-clear" class="w-full px-2 py-1 mt-1 border border-slate-300 rounded focus:outline-none" placeholder="esc">
+                        </div>
+                        <div>
+                            <label class="text-slate-500">重新分析</label>
+                            <input type="text" id="hotkey-retry" class="w-full px-2 py-1 mt-1 border border-slate-300 rounded focus:outline-none" placeholder="f10">
+                        </div>
+                        <div>
+                            <label class="text-slate-500">打开管理页面</label>
+                            <input type="text" id="hotkey-open" class="w-full px-2 py-1 mt-1 border border-slate-300 rounded focus:outline-none" placeholder="f12">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between border border-slate-100 bg-slate-50 p-3 rounded-lg">
+                    <div>
+                        <div class="font-bold text-slate-600 text-xs">后台程序状态</div>
+                        <div id="system-status-text" class="text-[11px] text-slate-400 mt-1">正在检测...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 mt-2">
+                <button onclick="closeGlobalSettingsModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-50">取消</button>
+                <button onclick="saveGlobalConfig()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 shadow-md">保存全局配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm hidden p-4">
+        <div class="settings-panel bg-white rounded-2xl border border-slate-200 p-6 w-full max-w-md shadow-2xl flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                    ⚙️ 配置 Agent 参数
+                </h3>
+                <button onclick="closeSettingsModal()" class="p-1 rounded text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Form fields -->
+            <div class="flex flex-col gap-3 text-xs">
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600">选择要配置的 Agent</label>
+                    <select id="setting-agent-select" onchange="loadSelectedAgentFields()" class="p-2 border border-slate-200 rounded-lg bg-slate-50 outline-none">
+                        <!-- Filled dynamically -->
+                    </select>
+                </div>
+
+                <!-- Hidden by default, shown only when selecting __new__ -->
+                <div id="setting-agent-id-container" class="flex flex-col gap-1 hidden">
+                    <label class="font-bold text-slate-600">唯一英文标识 (ID，新增后不可修改)</label>
+                    <input type="text" id="setting-agent-id" class="p-2 border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="例如: gemini">
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600">别名 / 备注</label>
+                    <input type="text" id="setting-agent-display-name" class="p-2 border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="例如：Gemini、DeepSeek">
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600">API URL (基础端点)</label>
+                    <input type="text" id="setting-api-url" class="p-2 border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="https://api.openai.com/v1">
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600">API Key (密钥)</label>
+                    <input type="text" id="setting-api-key" name="lensbridge-agent-token" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" class="api-key-input p-2 border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="sk-...">
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="font-bold text-slate-600">Model Name (模型名称)</label>
+                    <input type="text" id="setting-model" class="p-2 border border-slate-200 rounded-lg outline-none focus:border-indigo-500" placeholder="qwen-vl-max">
+                </div>
+            </div>
+            
+            <div class="flex justify-between gap-3 mt-2">
+                <button id="setting-delete-btn" onclick="deleteAgent()" class="px-4 py-2 border border-red-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 hidden transition">删除配置</button>
+                <div class="flex gap-3">
+                    <button onclick="closeSettingsModal()" class="px-4 py-2 border border-slate-200 rounded-lg text-xs font-semibold text-slate-500 hover:bg-slate-50">取消</button>
+                    <button onclick="saveAgentSettings()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 shadow-md">保存 Agent 配置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zoom overlay container -->
+    <div id="zoom-container" onclick="closeZoom()" class="fixed inset-0 z-50 flex items-center justify-center zoom-overlay hidden p-4 cursor-zoom-out">
+        <img id="zoom-img" src="" class="max-h-full max-w-full object-contain rounded-xl shadow-2xl border border-slate-200 transition-transform duration-300 scale-95">
+    </div>
+
+    <div id="app-toast" class="fixed left-1/2 bottom-24 -translate-x-1/2 z-[70] hidden px-4 py-2.5 rounded-xl bg-slate-900/90 text-white text-xs font-semibold shadow-xl backdrop-blur"></div>
+
+    <!-- Page Scripts -->
+    <script>
+        let currentEventSource = null;
+        let activeConversationId = null;
+        let lastCaptureId = null;
+        let serverConfig = null; // Store config loaded from server
+        let latestSystemStatus = null;
+
+        // Marked Renderer config
+        marked.setOptions({
+            breaks: true,
+            highlight: function(code, lang) {
+                if (Prism.languages[lang]) {
+                    return Prism.highlight(code, Prism.languages[lang], lang);
+                }
+                return code;
+            }
+        });
+
+        function looksLikeMarkdown(text) {
+            return /(^|\n)\s{0,3}(#{1,6}\s|[-*+]\s|\d+\.\s|>\s|```|!\[.*\]\(|\[.*\]\(|\|.+\|)/m.test(text);
+        }
+
+        function looksLikeCodeBlock(text) {
+            const normalized = String(text || '').trim();
+            if (!normalized) return false;
+            if (normalized.includes('```')) return true;
+            if (/^\s*(select|with|insert|update|delete|create|alter|drop|replace)\b/i.test(normalized)) return true;
+            if (/^\s*[{[]/.test(normalized) && /[}\]]\s*$/.test(normalized)) return true;
+            if (/\bfrom\b.+\bwhere\b/i.test(normalized)) return true;
+            return /;\s*$/.test(normalized) && normalized.length < 1200;
+        }
+
+        function guessCodeLanguage(text) {
+            const normalized = String(text || '').trim();
+            if (/^\s*(select|with|insert|update|delete|create|alter|drop|replace)\b/i.test(normalized)) {
+                return 'sql';
+            }
+            if (/^\s*[{[]/.test(normalized) && /[}\]]\s*$/.test(normalized)) {
+                return 'json';
+            }
+            if (/^\s*function\b|=>|const\s+\w+\s*=|let\s+\w+\s*=|var\s+\w+\s*=|class\s+\w+/m.test(normalized)) {
+                return 'javascript';
+            }
+            return '';
+        }
+
+        function formatSqlForDisplay(text) {
+            return String(text || '')
+                .trim()
+                .replace(/[ \t\r\n]+/g, ' ')
+                .replace(/\s+(FROM|WHERE|GROUP\s+BY|ORDER\s+BY|HAVING|LIMIT|OFFSET|VALUES|SET|RETURNING)\b/gi, '\n$1')
+                .replace(/\s+((?:LEFT|RIGHT|FULL|INNER|CROSS)\s+JOIN|JOIN|UNION(?:\s+ALL)?)\b/gi, '\n$1')
+                .replace(/\s+(AND|OR)\s+/gi, '\n  $1 ')
+                .replace(/;\s*$/, ';');
+        }
+
+        function normalizeModelResponse(text) {
+            const raw = String(text ?? '').trim();
+            if (!raw) return '';
+            if (looksLikeMarkdown(raw)) return raw;
+            if (looksLikeCodeBlock(raw)) {
+                const lang = guessCodeLanguage(raw);
+                const formatted = lang === 'sql' ? formatSqlForDisplay(raw) : raw;
+                return lang ? `\`\`\`${lang}\n${formatted}\n\`\`\`` : `\`\`\`\n${formatted}\n\`\`\``;
+            }
+            if (raw.includes('\n')) {
+                return raw.split(/\n{2,}/).map(part => part.trim()).filter(Boolean).join('\n\n');
+            }
+            return raw;
+        }
+
+        function renderModelResponse(targetEl, text) {
+            if (!targetEl) return;
+            const normalized = normalizeModelResponse(text);
+            targetEl.innerHTML = normalized
+                ? marked.parse(normalized)
+                : '<p class="text-slate-400 italic">正在唤醒模型分析...</p>';
+            targetEl.querySelectorAll('pre code.language-sql').forEach(codeEl => {
+                codeEl.textContent = formatSqlForDisplay(codeEl.textContent);
+            });
+            Prism.highlightAllUnder(targetEl);
+        }
+
+        // Initialize UI
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Close dropdown if clicked outside
+            window.addEventListener('click', () => {
+                document.getElementById('agent-dropdown').classList.add('hidden');
+            });
+
+            await loadServerConfig();
+            await fetchActiveConversation();
+            await fetchConversationsList();
+            await fetchActiveChatMessages();
+            await refreshCaptureStatus();
+            
+            // Poll for new screenshots inside the active conversation
+            setInterval(pollForNewCaptures, 3000);
+            setInterval(refreshCaptureStatus, 750);
+        });
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('mobile-sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function parseDatabaseUtc(value) {
+            if (!value) return null;
+            const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+            const hasTimezone = /(?:Z|[+-]\d{2}:\d{2})$/i.test(normalized);
+            const date = new Date(hasTimezone ? normalized : `${normalized}Z`);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getAgentDisplayName(agentName, fallback = '') {
+            if (agentName === 'mock') return 'Mock 演示模式';
+            return serverConfig?.agents?.[agentName]?.display_name || fallback || agentName || '未知模型';
+        }
+
+        let toastTimer = null;
+        function showToast(message) {
+            const toast = document.getElementById('app-toast');
+            toast.textContent = message;
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.add('hidden'), 2600);
+        }
+
+        // Fetch active conversation from server
+        async function fetchActiveConversation() {
+            try {
+                const response = await fetch('/conversations/active');
+                const data = await response.json();
+                activeConversationId = data.conversation_id;
+                
+                const titleEl = document.getElementById('active-conv-title');
+                const timeEl = document.getElementById('active-conv-time');
+                if (data.conversation) {
+                    titleEl.value = data.conversation.title;
+                    const date = parseDatabaseUtc(data.conversation.created_at);
+                    timeEl.innerText = date
+                        ? date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                        : '';
+                    timeEl.classList.remove('hidden');
+                } else {
+                    titleEl.value = "新对话";
+                    timeEl.classList.add('hidden');
+                }
+            } catch (err) {
+                console.error("Error fetching active conversation:", err);
+            }
+        }
+
+        // Switch to selected conversation
+        async function selectConversation(convId) {
+            if (activeConversationId === convId) return;
+            
+            if (currentEventSource) {
+                currentEventSource.close();
+                currentEventSource = null;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('conversation_id', convId);
+                await fetch('/conversations/active', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                activeConversationId = convId;
+                lastCaptureId = null;
+                
+                await fetchActiveConversation();
+                await fetchConversationsList();
+                await fetchActiveChatMessages();
+            } catch (err) {
+                console.error("Error selecting conversation:", err);
+            }
+        }
+
+        // Create new conversation
+        async function createNewConversation() {
+            try {
+                const response = await fetch('/conversations', { method: 'POST' });
+                const data = await response.json();
+                activeConversationId = data.conversation_id;
+                
+                await fetchActiveConversation();
+                await fetchConversationsList();
+                await fetchActiveChatMessages();
+            } catch (err) {
+                console.error("Error creating new conversation:", err);
+            }
+        }
+
+        // Load conversation sidebar list
+        async function fetchConversationsList() {
+            try {
+                const response = await fetch('/conversations');
+                const data = await response.json();
+                
+                renderSidebarList(document.getElementById('conversations-list'), data);
+                renderSidebarList(document.getElementById('mobile-conversations-list'), data);
+            } catch (err) {
+                console.error("Error loading conversations list:", err);
+            }
+        }
+
+        // Render lists helper
+        function renderSidebarList(containerEl, data) {
+            containerEl.innerHTML = '';
+            if (data.length === 0) {
+                containerEl.innerHTML = '<p class="text-xs text-slate-400 p-2 italic">暂无对话记录</p>';
+                return;
+            }
+            
+            data.forEach(conv => {
+                const item = document.createElement('div');
+                const isActive = conv.id === activeConversationId;
+                item.className = `flex items-center justify-between px-3 py-2.5 rounded-full text-xs font-medium cursor-pointer transition group ${isActive ? 'bg-activeBlue text-blue-950 font-semibold' : 'text-slate-700 hover:bg-sidebarHover'}`;
+                
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0 flex-1" onclick="selectConversation(${conv.id})">
+                        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.12 2.9 2.65 3.1l1.5.17v2.9c0 .72.82 1.1 1.34.62l3.52-3.32h5.1c1.6 0 2.92-1.3 2.92-2.92v-5.2c0-1.6-1.3-2.92-2.92-2.92H6.42C4.8 3.5 3.5 4.8 3.5 6.42v5.2z"></path></svg>
+                        <span class="truncate pr-2">${conv.title}</span>
+                    </div>
+                    <button onclick="deleteConversation(event, ${conv.id})" class="text-slate-400 hover:text-rose-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                `;
+                
+                containerEl.appendChild(item);
+            });
+        }
+
+        // Delete specific conversation
+        async function deleteConversation(e, convId) {
+            e.stopPropagation();
+            if (!confirm("确定要删除这个对话吗？该对话下的所有截图和分析都将被物理清理。")) return;
+            
+            try {
+                const response = await fetch(`/conversations/${convId}`, { method: 'DELETE' });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    if (activeConversationId === convId) {
+                        activeConversationId = null;
+                        await fetchActiveConversation();
+                    }
+                    await fetchConversationsList();
+                    await fetchActiveChatMessages();
+                }
+            } catch (err) {
+                console.error("Error deleting conversation:", err);
+            }
+        }
+
+        // Load messages for the active chat
+        async function fetchActiveChatMessages() {
+            if (!activeConversationId) return;
+            
+            try {
+                const response = await fetch(`/conversations/${activeConversationId}/captures`);
+                const captures = await response.json();
+                
+                const messagesContainer = document.getElementById('messages-container');
+                const emptyState = document.getElementById('empty-state');
+                messagesContainer.innerHTML = '';
+                
+                if (captures.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+                
+                emptyState.classList.add('hidden');
+                
+                captures.forEach(cap => {
+                    renderCaptureExchange(cap);
+                });
+                
+                // Scroll bottom
+                const feed = document.getElementById('chat-feed');
+                feed.scrollTop = feed.scrollHeight;
+
+                // Check if last capture is in processing mode
+                if (captures.length > 0) {
+                    const latest = captures[captures.length - 1];
+                    if (latest.status === 'pending' || latest.status === 'processing') {
+                        listenToSSE(latest.id);
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading chat messages:", err);
+            }
+        }
+
+        // Render one exchange (User image + AI answer card aligned vertically)
+        function renderCaptureExchange(cap) {
+            const container = document.getElementById('messages-container');
+            const exchangeDiv = document.createElement('div');
+            exchangeDiv.id = `exchange-${cap.id}`;
+            exchangeDiv.className = "flex flex-col gap-4";
+            
+            const captureDate = parseDatabaseUtc(cap.timestamp);
+            const localTime = captureDate
+                ? captureDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+                : '';
+            
+            // Get agent display name dynamically
+            const agentDisp = cap.agent_display_name || getAgentDisplayName(cap.agent_name);
+
+            // Parse image_filename as JSON array if possible
+            let images = [];
+            try {
+                if (cap.image_filename.startsWith("[")) {
+                    images = JSON.parse(cap.image_filename);
+                } else {
+                    images = [cap.image_filename];
+                }
+            } catch (e) {
+                images = [cap.image_filename];
+            }
+            
+            let imagesHtml = '';
+            if (images.length === 1 && images[0] !== "") {
+                imagesHtml = `
+                    <div onclick="zoomImage('/uploads/${images[0]}')" class="rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md cursor-zoom-in max-w-[320px] transition-transform duration-200 hover:scale-[1.01]">
+                        <img src="/uploads/${images[0]}" class="w-full max-h-[180px] object-cover">
+                    </div>
+                `;
+            } else if (images.length > 1) {
+                // Render as a grid for multiple images
+                imagesHtml = `<div class="grid grid-cols-2 gap-2 max-w-[320px]">`;
+                images.forEach(img => {
+                    imagesHtml += `
+                        <div onclick="zoomImage('/uploads/${img}')" class="rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md cursor-zoom-in transition-transform duration-200 hover:scale-[1.02]">
+                            <img src="/uploads/${img}" class="w-full h-24 object-cover">
+                        </div>
+                    `;
+                });
+                imagesHtml += `</div>`;
+            }
+            let userPromptHtml = '';
+            if (cap.user_prompt) {
+                userPromptHtml = `<div class="bg-indigo-50 text-indigo-900 px-4 py-2 rounded-2xl rounded-tr-sm text-sm max-w-xl shadow-sm border border-indigo-100">${cap.user_prompt}</div>`;
+            }
+
+            exchangeDiv.innerHTML = `
+                <!-- User card (Right side) -->
+                <div class="exchange-user flex flex-col items-end gap-2 max-w-[90%] ml-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400 font-semibold">${localTime}</span>
+                        <span class="text-xs font-bold text-slate-700">${imagesHtml ? '您上传的截图 ' + (images.length > 1 ? '('+images.length+'张)' : '') : '您的问题'}</span>
+                    </div>
+                    ${imagesHtml}
+                    ${userPromptHtml}
+                </div>
+
+                <!-- AI Card (Left aligned, vertically stacked to maximize space) -->
+                <div class="flex flex-col gap-2 min-w-0 flex-1">
+                    <!-- Header with avatar on the left, name/status on the right -->
+                    <div class="ai-card-header flex items-center gap-2 select-none">
+                        <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-600 flex items-center justify-center shadow-md flex-shrink-0">
+                            <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L14.7 9.3L22 12L14.7 14.7L12 22L9.3 14.7L2 12L9.3 9.3L12 2Z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xs font-bold text-slate-800">AI 解答</span>
+                        <span class="agent-badge text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded" title="本答案由 ${agentDisp} 生成">${agentDisp}</span>
+                        <button onclick="retryCapture(${cap.id})" class="text-[10px] text-slate-500 hover:text-indigo-600 bg-white border border-slate-200 px-2 py-0.5 rounded shadow-sm hover:bg-indigo-50 transition-colors ml-1">
+                            ↻ 重新分析
+                        </button>
+                        <span id="loader-${cap.id}" class="hidden text-[10px] text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold animate-pulse border border-emerald-100">正在分析...</span>
+                    </div>
+                    
+                    <!-- AI response text, pl-0 to align with the rest of the text and fill the whole width -->
+                    <div id="ai-response-${cap.id}" class="prose max-w-none text-slate-800 text-sm pl-0 w-full">
+                        ${cap.ai_response ? marked.parse(normalizeModelResponse(cap.ai_response)) : '<p class="text-slate-400 italic">正在唤醒模型分析...</p>'}
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(exchangeDiv);
+            const initialResponse = exchangeDiv.querySelector(`#ai-response-${cap.id}`);
+            if (initialResponse && cap.ai_response) {
+                renderModelResponse(initialResponse, cap.ai_response);
+            }
+            Prism.highlightAllUnder(exchangeDiv);
+        }
+
+        // Listen to SSE Stream and pipe chunks in realtime
+        function listenToSSE(id) {
+            if (currentEventSource) {
+                currentEventSource.close();
+            }
+
+            const responseDiv = document.getElementById(`ai-response-${id}`);
+            const loader = document.getElementById(`loader-${id}`);
+            
+            if (loader) loader.classList.remove('hidden');
+            let accumulatedText = "";
+
+            currentEventSource = new EventSource(`/stream/${id}`);
+            
+            currentEventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.error) {
+                    responseDiv.innerHTML = `<p class="text-rose-500 font-semibold">${data.error}</p>`;
+                    if (loader) loader.classList.add('hidden');
+                    currentEventSource.close();
+                    return;
+                }
+
+                if (data.text) {
+                    accumulatedText += data.text;
+                    renderModelResponse(responseDiv, accumulatedText);
+                    
+                    const feed = document.getElementById('chat-feed');
+                    feed.scrollTop = feed.scrollHeight;
+                }
+
+                if (data.done) {
+                    if (loader) loader.classList.add('hidden');
+                    currentEventSource.close();
+                    currentEventSource = null;
+                }
+            };
+
+            currentEventSource.onerror = (err) => {
+                console.error("SSE stream connection error:", err);
+                if (loader) loader.classList.add('hidden');
+                if (currentEventSource) {
+                    currentEventSource.close();
+                    currentEventSource = null;
+                }
+            };
+        }
+
+        // Poll checks for new screenshots inside the active conversation
+        async function pollForNewCaptures() {
+            if (!activeConversationId) return;
+            
+            try {
+                const response = await fetch(`/conversations/${activeConversationId}/captures`);
+                const captures = await response.json();
+                
+                if (captures.length > 0) {
+                    const latest = captures[captures.length - 1];
+                    if (latest.id !== lastCaptureId) {
+                        lastCaptureId = latest.id;
+                        
+                        document.getElementById('empty-state').classList.add('hidden');
+                        
+                        const existing = document.getElementById(`exchange-${latest.id}`);
+                        if (!existing) {
+                            renderCaptureExchange(latest);
+                            const feed = document.getElementById('chat-feed');
+                            feed.scrollTop = feed.scrollHeight;
+                        }
+                        
+                        if (latest.status === 'pending' || latest.status === 'processing') {
+                            listenToSSE(latest.id);
+                        }
+                    } else if ((latest.status === 'pending' || latest.status === 'processing') && !currentEventSource) {
+                        // Retry or restart stream
+                        listenToSSE(latest.id);
+                    }
+                } else {
+                    lastCaptureId = null;
+                    document.getElementById('empty-state').classList.remove('hidden');
+                    document.getElementById('messages-container').innerHTML = '';
+                }
+            } catch (err) {
+                console.error("Error polling captures:", err);
+            }
+        }
+
+        // Load config from backend
+        async function loadServerConfig() {
+            try {
+                const response = await fetch('/config/agent', { cache: 'no-store' });
+                serverConfig = await response.json();
+                
+                // Set model display text
+                const active = serverConfig.active_agent;
+                let activeCnName = active;
+                if (serverConfig.agents[active] && serverConfig.agents[active].display_name) {
+                    activeCnName = serverConfig.agents[active].display_name;
+                } else if (active === 'mock') {
+                    activeCnName = 'Mock 演示模式';
+                }
+                
+                document.getElementById('model-display').innerText = activeCnName;
+                
+                // Populate dropdown list
+                const dropdown = document.getElementById('agent-dropdown');
+                dropdown.innerHTML = '';
+                
+                serverConfig.available_agents.forEach(agent => {
+                    let agentCnName = agent;
+                    if (serverConfig.agents[agent] && serverConfig.agents[agent].display_name) {
+                        agentCnName = serverConfig.agents[agent].display_name;
+                    } else if (agent === 'mock') {
+                        agentCnName = 'Mock 演示模式';
+                    }
+                    
+                    const btn = document.createElement('button');
+                    btn.className = `w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-slate-50 transition ${agent === active ? 'bg-activeBlue text-blue-900 font-bold' : 'text-slate-700'}`;
+                    btn.innerText = agentCnName;
+                    
+                    btn.onclick = async (e) => {
+                        e.stopPropagation();
+                        dropdown.classList.add('hidden');
+                        await switchActiveAgent(agent);
+                    };
+                    
+                    dropdown.appendChild(btn);
+                });
+                
+                // Populate config select list in settings modal
+                const modalSelect = document.getElementById('setting-agent-select');
+                const previousSelectedVal = modalSelect.value;
+                modalSelect.innerHTML = '';
+                
+                serverConfig.available_agents.forEach(agent => {
+                    if (agent === 'mock') return; // Mock doesn't need API config
+                    let agentCnName = agent;
+                    if (serverConfig.agents[agent] && serverConfig.agents[agent].display_name) {
+                        agentCnName = serverConfig.agents[agent].display_name;
+                    }
+                    
+                    const opt = document.createElement('option');
+                    opt.value = agent;
+                    opt.innerText = agentCnName;
+                    modalSelect.appendChild(opt);
+                });
+
+                // Append + 新建自定义 Agent...
+                const optNew = document.createElement('option');
+                optNew.value = '__new__';
+                optNew.innerText = '+ 新增自定义 Agent...';
+                modalSelect.appendChild(optNew);
+                
+                if (previousSelectedVal && [...modalSelect.options].some(o => o.value === previousSelectedVal)) {
+                    modalSelect.value = previousSelectedVal;
+                }
+                
+                // Set global system prompt
+                document.getElementById('global-system-prompt').value = serverConfig.global_system_prompt || '';
+                
+                // Populate hotkeys
+                const hk = serverConfig.hotkeys || {};
+                document.getElementById('hotkey-toggle').value = hk.toggle || 'f8';
+                document.getElementById('hotkey-send').value = hk.send || 'f9';
+                document.getElementById('hotkey-clear').value = hk.clear || 'esc';
+                document.getElementById('hotkey-retry').value = hk.retry || 'f10';
+                document.getElementById('hotkey-open').value = hk.open || 'f12';
+                
+                loadSelectedAgentFields();
+            } catch (err) {
+                console.error("Error loading server configuration:", err);
+            }
+        }
+        
+        // Retry a capture
+        async function retryCapture(id) {
+            try {
+                const response = await fetch(`/captures/${id}/retry`, { method: 'POST' });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    // Re-render so the Agent badge immediately matches the model used for this retry.
+                    await fetchActiveChatMessages();
+                } else {
+                    alert("重试失败：" + res.message);
+                }
+            } catch (err) {
+                console.error("Error retrying capture:", err);
+            }
+        }
+
+        // Toggle Sidebar on Mobilewn display
+        function toggleAgentDropdown(e) {
+            e.stopPropagation();
+            const dropdown = document.getElementById('agent-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Trigger switch model via backend API
+        async function switchActiveAgent(agentName) {
+            try {
+                const formData = new FormData();
+                formData.append('active_agent', agentName);
+                const response = await fetch('/config/agent', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await response.json();
+                if (!response.ok) {
+                    throw new Error(res.detail || '模型切换失败');
+                }
+                if (res.status === 'success') {
+                    document.getElementById('model-display').innerText = res.display_name || agentName;
+                    await loadServerConfig();
+                    showToast(`已切换至 ${res.display_name || agentName}，后续新题将使用该模型`);
+                }
+            } catch (err) {
+                console.error("Error switching agent:", err);
+                alert(`模型切换失败：${err.message}`);
+            }
+        }
+
+        // Settings Modal controls
+        function openGlobalSettingsModal() {
+            document.getElementById('global-settings-modal').classList.remove('hidden');
+            loadSystemStatus();
+        }
+
+        function closeGlobalSettingsModal() {
+            document.getElementById('global-settings-modal').classList.add('hidden');
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+            loadSelectedAgentFields();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        // Load field values when select drops
+        function loadSelectedAgentFields() {
+            if (!serverConfig) return;
+            const selected = document.getElementById('setting-agent-select').value;
+            const idContainer = document.getElementById('setting-agent-id-container');
+            const deleteBtn = document.getElementById('setting-delete-btn');
+            
+            if (selected === '__new__') {
+                idContainer.classList.remove('hidden');
+                if (deleteBtn) deleteBtn.classList.add('hidden');
+                document.getElementById('setting-agent-id').value = '';
+                document.getElementById('setting-agent-display-name').value = '';
+                document.getElementById('setting-api-url').value = '';
+                document.getElementById('setting-api-key').value = '';
+                document.getElementById('setting-model').value = '';
+            } else {
+                idContainer.classList.add('hidden');
+                if (deleteBtn) deleteBtn.classList.remove('hidden');
+                const agentInfo = serverConfig.agents[selected] || { display_name: '', api_url: '', model: '', api_key: '' };
+                document.getElementById('setting-agent-display-name').value = agentInfo.display_name || selected;
+                document.getElementById('setting-api-url').value = agentInfo.api_url;
+                document.getElementById('setting-api-key').value = agentInfo.api_key;
+                document.getElementById('setting-model').value = agentInfo.model;
+            }
+        }
+
+        // Delete agent
+        async function deleteAgent() {
+            const selected = document.getElementById('setting-agent-select').value;
+            if (selected === '__new__') return;
+            
+            if (!confirm(`确定要彻底删除 [${selected}] 的配置吗？`)) return;
+            
+            try {
+                const response = await fetch(`/config/agent/${selected}`, { method: 'DELETE' });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    alert("删除成功！");
+                    closeSettingsModal();
+                    await loadServerConfig();
+                    
+                    // If the active agent was deleted, switch to the new active agent
+                    if (serverConfig && serverConfig.active_agent) {
+                        await switchActiveAgent(serverConfig.active_agent);
+                    }
+                } else {
+                    alert("删除失败：" + res.message);
+                }
+            } catch (err) {
+                console.error("Error deleting agent:", err);
+                alert("删除发生异常，请重试！");
+            }
+        }
+
+        // Save settings via backend API
+        async function saveAgentSettings() {
+            const selectEl = document.getElementById('setting-agent-select');
+            const selected = selectEl.value;
+            
+            let agentName = selected;
+            const displayName = document.getElementById('setting-agent-display-name').value.trim();
+            const apiUrl = document.getElementById('setting-api-url').value.trim();
+            const apiKey = document.getElementById('setting-api-key').value.trim();
+            const model = document.getElementById('setting-model').value.trim();
+            
+            if (selected === '__new__') {
+                const newId = document.getElementById('setting-agent-id').value.trim().toLowerCase();
+                if (!newId) {
+                    alert("请填写唯一英文标识 (ID)！");
+                    return;
+                }
+                if (!/^[a-z0-9_]+$/.test(newId)) {
+                    alert("唯一英文标识 (ID) 只能包含小写英文字母、数字和下划线！");
+                    return;
+                }
+                if (newId === 'mock' || (serverConfig.agents && serverConfig.agents[newId])) {
+                    alert("该标识已存在，请使用其他名称！");
+                    return;
+                }
+                agentName = newId;
+            }
+            
+            if (!displayName || !apiUrl || !apiKey || !model) {
+                alert("请填写所有的核心配置字段！");
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('agent_name', agentName);
+                formData.append('display_name', displayName);
+                formData.append('api_url', apiUrl);
+                formData.append('api_key', apiKey);
+                formData.append('model', model);
+                
+                const response = await fetch('/config/settings', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const res = await response.json();
+                if (res.status === 'success') {
+                    alert("参数配置保存成功！");
+                    closeSettingsModal();
+                    
+                    // If it was a new agent, let's select it in select box for next edit
+                    if (selected === '__new__') {
+                        selectEl.value = agentName;
+                    }
+                    
+                    await loadServerConfig();
+                    
+                    // Automatically switch to it if newly created
+                    if (selected === '__new__') {
+                        await switchActiveAgent(agentName);
+                    }
+                } else {
+                    alert("保存失败：" + res.message);
+                }
+            } catch (err) {
+                console.error("Error saving settings:", err);
+                alert("保存发生异常错误，请重试！");
+            }
+        }
+
+
+        // Zoom image view
+        function zoomImage(src) {
+            const container = document.getElementById('zoom-container');
+            const img = document.getElementById('zoom-img');
+            img.src = src;
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeZoom() {
+            const container = document.getElementById('zoom-container');
+            const img = document.getElementById('zoom-img');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            setTimeout(() => {
+                container.classList.add('hidden');
+                img.src = '';
+            }, 200);
+        }
+
+        // Save global config (prompt + hotkeys)
+        async function saveGlobalConfig() {
+            const promptValue = document.getElementById('global-system-prompt').value;
+            
+            // Save prompt
+            try {
+                const formData = new FormData();
+                formData.append('system_prompt', promptValue);
+                await fetch('/config/global_prompt', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch(e) {
+                console.error(e);
+            }
+            
+            // Save hotkeys
+            const toggleValue = document.getElementById('hotkey-toggle').value || 'f8';
+            const sendValue = document.getElementById('hotkey-send').value || 'f9';
+            const clearValue = document.getElementById('hotkey-clear').value || 'esc';
+            const retryValue = document.getElementById('hotkey-retry').value || 'f10';
+            const openValue = document.getElementById('hotkey-open').value || 'f12';
+            
+            try {
+                const hotkeyResponse = await fetch('/config/hotkeys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        toggle: toggleValue,
+                        send: sendValue,
+                        clear: clearValue,
+                        retry: retryValue,
+                        open: openValue
+                    })
+                });
+                if (!hotkeyResponse.ok) {
+                    const error = await hotkeyResponse.json();
+                    throw new Error(error.detail || '快捷键保存失败');
+                }
+                alert("全局配置保存成功，快捷键已实时生效！");
+                loadServerConfig();
+                loadSystemStatus();
+                closeGlobalSettingsModal();
+            } catch(e) {
+                console.error(e);
+                alert(`保存快捷键失败：${e.message}`);
+            }
+        }
+
+        async function loadSystemStatus() {
+            const statusText = document.getElementById('system-status-text');
+            if (!statusText) return;
+            try {
+                const response = await fetch('/system/status');
+                const status = await response.json();
+                const uptimeMinutes = Math.floor((status.uptime_seconds || 0) / 60);
+                statusText.textContent = status.capture_service
+                    ? `运行正常 · 截图监听已启用 · 已运行 ${uptimeMinutes} 分钟`
+                    : '服务端运行中 · 截图监听未启用';
+                applyShutdownVisibility(status.can_shutdown);
+            } catch (error) {
+                statusText.textContent = '无法获取后台程序状态';
+                applyShutdownVisibility(false);
+            }
+        }
+
+        function applyShutdownVisibility(canShutdown) {
+            document.querySelectorAll('[data-shutdown-control]').forEach(button => {
+                button.disabled = !canShutdown;
+                button.classList.toggle('opacity-50', !canShutdown);
+                button.classList.toggle('cursor-not-allowed', !canShutdown);
+                button.title = canShutdown
+                    ? '关闭 LensBridge AI'
+                    : '关闭程序仅支持在运行 LensBridge AI 的电脑上操作';
+            });
+        }
+
+        async function refreshCaptureStatus() {
+            const modeLabel = document.getElementById('capture-mode-label');
+            const modeIcon = document.getElementById('capture-mode-icon');
+            const operationText = document.getElementById('capture-operation-text');
+            const queueBadge = document.getElementById('capture-queue-badge');
+            const countdown = document.getElementById('capture-countdown');
+            if (!modeLabel || !modeIcon || !operationText || !queueBadge || !countdown) return;
+
+            try {
+                const response = await fetch('/system/status', { cache: 'no-store' });
+                if (!response.ok) throw new Error('status unavailable');
+                const status = await response.json();
+                latestSystemStatus = status;
+                applyShutdownVisibility(status.can_shutdown);
+
+                const isBatch = status.capture_mode === 'batch';
+                modeLabel.textContent = isBatch ? '多图模式' : '单图模式';
+                modeIcon.textContent = isBatch ? '▦' : '▣';
+                modeIcon.className = `w-9 h-9 rounded-xl text-white flex items-center justify-center flex-shrink-0 shadow-sm ${isBatch ? 'bg-cyan-600' : 'bg-indigo-600'}`;
+                operationText.textContent = status.capture_service
+                    ? (status.operation_message || '等待截图操作')
+                    : '电脑端截图监听未运行';
+
+                const queueSize = Number(status.queue_size || 0);
+                queueBadge.textContent = `队列 ${queueSize} 张`;
+                queueBadge.classList.toggle('hidden', !isBatch);
+
+                if (status.capture_stage === 'awaiting_second_point' && status.stage_deadline) {
+                    const seconds = Math.max(0, Math.ceil(status.stage_deadline - Date.now() / 1000));
+                    countdown.textContent = `${seconds}s`;
+                    countdown.classList.remove('hidden');
+                } else {
+                    countdown.classList.add('hidden');
+                }
+            } catch (error) {
+                latestSystemStatus = null;
+                applyShutdownVisibility(false);
+                modeLabel.textContent = '状态离线';
+                operationText.textContent = '暂时无法读取电脑端截图状态';
+                queueBadge.classList.add('hidden');
+                countdown.classList.add('hidden');
+                modeIcon.textContent = '!';
+                modeIcon.className = 'w-9 h-9 rounded-xl bg-slate-400 text-white flex items-center justify-center flex-shrink-0 shadow-sm';
+            }
+        }
+
+        async function shutdownApplication() {
+            if (latestSystemStatus && latestSystemStatus.can_shutdown === false) {
+                alert('关闭程序仅支持在运行 LensBridge AI 的电脑本机页面操作。');
+                return;
+            }
+            if (!confirm('确定退出 LensBridge AI 后台程序吗？退出后截图和网页服务都会停止。')) return;
+            try {
+                const response = await fetch('/system/shutdown', { method: 'POST' });
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || '退出失败');
+                }
+                const statusText = document.getElementById('system-status-text');
+                if (statusText) statusText.textContent = '程序正在退出...';
+                applyShutdownVisibility(false);
+            } catch (error) {
+                alert(`退出程序失败：${error.message}`);
+            }
+        }
+
+        // Clean all history database
+        async function clearHistory() {
+            if (!confirm("警告！这会清除数据库中所有的会话以及所有图片文件，且无法找回。确定执行吗？")) return;
+            
+            try {
+                const response = await fetch('/captures/clear', { method: 'POST' });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    activeConversationId = null;
+                    lastCaptureId = null;
+                    if (currentEventSource) {
+                        currentEventSource.close();
+                        currentEventSource = null;
+                    }
+                    await fetchActiveConversation();
+                    await fetchConversationsList();
+                    await fetchActiveChatMessages();
+                    await loadServerConfig();
+                }
+            } catch (err) {
+                console.error("Error clearing database history:", err);
+            }
+        }
+
+        async function renameConversation(newTitle) {
+            if (!activeConversationId || !newTitle.trim()) return;
+            try {
+                const formData = new FormData();
+                formData.append('title', newTitle.trim());
+                await fetch(`/conversations/${activeConversationId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+                await fetchConversationsList();
+            } catch (err) {
+                console.error("Error renaming conversation:", err);
+            }
+        }
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                submitChatInput();
+            }
+        }
+
+        async function submitChatInput() {
+            const inputEl = document.getElementById('chat-input');
+            const text = inputEl.value.trim();
+            if (!text || !activeConversationId) return;
+
+            inputEl.value = ''; // clear input
+            
+            try {
+                const formData = new FormData();
+                formData.append('text', text);
+                const response = await fetch('/captures/text', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await response.json();
+                if (res.status === 'success') {
+                    // Trigger refresh of messages immediately
+                    await pollForNewCaptures();
+                }
+            } catch (err) {
+                console.error("Error submitting text capture:", err);
+            }
+        }
+    </script>
+</body>
+</html>
